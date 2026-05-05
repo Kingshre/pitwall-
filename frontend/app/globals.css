@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0A0A0F;
+  --surface: #12121A;
+  --border: #1E1E2E;
+  --accent: #E8002D;
+  --yellow: #FFF200;
+  --muted: #4A4A6A;
+  --text: #E8E8F0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.display { font-family: 'Barlow Condensed', sans-serif; }
+
+/* Tire compound dot colors */
+.tire-SOFT     { background: #E8002D; }
+.tire-MEDIUM   { background: #FFF200; }
+.tire-HARD     { background: #EBEBEB; }
+.tire-INTERMEDIATE { background: #39B54A; }
+.tire-WET      { background: #0067FF; }
+.tire-UNKNOWN  { background: #999999; }
