@@ -41,7 +41,6 @@ def get_season_drivers(year: int) -> list[dict]:
     if not rounds:
         return []
 
-    # Load first race to get driver list
     session = fastf1.get_session(year, rounds[0], "R")
     session.load(laps=True, telemetry=False, weather=False, messages=False)
     laps = session.laps.copy()
@@ -63,16 +62,14 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
     rounds = schedule[schedule["EventFormat"].isin(["conventional", "sprint_shootout"])]["RoundNumber"].tolist()
     rounds = rounds[:max_rounds]
 
-    quali_deltas = []       # vs field median in quali
-    race_pace_deltas = []   # vs field in race (positive = faster)
-    deg_rates = []          # personal tire deg rate
-    field_deg_rates = []    # field tire deg rate
-    consistency_stds = []   # lap time std dev
-    positions_gained = []   # grid pos - finish pos
+    quali_deltas = []
+    race_pace_deltas = []
+    deg_rates = []
+    field_deg_rates = []
+    consistency_stds = []
+    positions_gained = []
     wet_pace = []
     dry_pace = []
-
-    race_results = []
 
     for round_num in rounds:
         try:
@@ -97,14 +94,11 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
 
             if len(drv_clean) >= 5:
                 drv_avg = _sf(drv_clean["LapTimeSeconds"].mean(), field_avg)
-                delta = field_avg - drv_avg
-                race_pace_deltas.append(delta)
+                race_pace_deltas.append(field_avg - drv_avg)
 
-                # Consistency
                 std = _sf(drv_clean["LapTimeSeconds"].std(), 0)
                 consistency_stds.append(std)
 
-                # Tire degradation
                 drv_with_compound = drv_clean[drv_clean["Compound"].notna() & drv_clean["TyreLife"].notna()]
                 if len(drv_with_compound) >= 8:
                     x = drv_with_compound["TyreLife"].values.astype(float)
@@ -113,7 +107,6 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
                         coeffs = np.polyfit(x, y, 1)
                         deg_rates.append(float(coeffs[0]))
 
-                # Field deg rate
                 field_with_compound = clean[clean["Compound"].notna() & clean["TyreLife"].notna()]
                 if len(field_with_compound) >= 10:
                     x2 = field_with_compound["TyreLife"].values.astype(float)
@@ -122,7 +115,6 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
                         coeffs2 = np.polyfit(x2, y2, 1)
                         field_deg_rates.append(float(coeffs2[0]))
 
-            # Positions gained
             drv_race_laps = laps[laps["Driver"] == driver]
             if len(drv_race_laps) > 0:
                 first_lap = drv_race_laps[drv_race_laps["LapNumber"] == drv_race_laps["LapNumber"].min()]
@@ -133,7 +125,6 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
                     if grid and finish and pd.notna(grid) and pd.notna(finish):
                         positions_gained.append(float(grid) - float(finish))
 
-            # Wet vs dry
             try:
                 weather = race.weather_data
                 if weather is not None and len(weather) > 0 and "Rainfall" in weather.columns:
@@ -158,11 +149,51 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
             qlaps = qlaps[qlaps["LapTime"].notna()]
             qlaps["LapTimeSeconds"] = qlaps["LapTime"].dt.total_seconds()
 
-            # Best lap per driver
             best = qlaps.groupby("Driver")["LapTimeSeconds"].min()
             if driver in best.index and len(best) >= 3:
                 field_best_median = _sf(best.median())
                 drv_best = _sf(best[driver])
-                quali_deltas.append(field_best_median - drv_best)  # positive = faster
+                quali_deltas.append(field_best_median - drv_best)
         except Exception:
             pass
+
+    # ---- SCORE COMPUTATION ----
+    avg_quali = sum(quali_deltas) / len(quali_deltas) if quali_deltas else 0.0
+    quali_score = min(100.0, max(0.0, 50.0 + avg_quali * 10))
+
+    avg_race = sum(race_pace_deltas) / len(race_pace_deltas) if race_pace_deltas else 0.0
+    race_score = min(100.0, max(0.0, 50.0 + avg_race * 10))
+
+    avg_deg = sum(deg_rates) / len(deg_rates) if deg_rates else 0.0
+    avg_field_deg = sum(field_deg_rates) / len(field_deg_rates) if field_deg_rates else avg_deg
+    deg_diff = avg_field_deg - avg_deg
+    tire_score = min(100.0, max(0.0, 50.0 + deg_diff * 100))
+
+    avg_std = sum(consistency_stds) / len(consistency_stds) if consistency_stds else 1.0
+    consistency_score = min(100.0, max(0.0, 100.0 - (avg_std * 15)))
+
+    avg_gained = sum(positions_gained) / len(positions_gained) if positions_gained else 0.0
+    overtaking_score = min(100.0, max(0.0, 50.0 + avg_gained * 5))
+
+    if wet_pace and dry_pace:
+        wet_avg = sum(wet_pace) / len(wet_pace)
+        dry_avg = sum(dry_pace) / len(dry_pace)
+        wet_score = min(100.0, max(0.0, 50.0 + (wet_avg - dry_avg) * 10))
+    elif wet_pace:
+        wet_score = min(100.0, max(0.0, 50.0 + (sum(wet_pace) / len(wet_pace)) * 10))
+    else:
+        wet_score = 50.0
+
+    return {
+        "driver": driver,
+        "year": year,
+        "rounds_analyzed": len(rounds),
+        "scores": {
+            "qualifying_pace": round(quali_score, 1),
+            "race_pace": round(race_score, 1),
+            "tire_management": round(tire_score, 1),
+            "consistency": round(consistency_score, 1),
+            "overtaking": round(overtaking_score, 1),
+            "wet_weather": round(wet_score, 1),
+        },
+    }
