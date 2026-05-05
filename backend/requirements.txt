@@ -1,10 +1,10 @@
-fastapi==0.111.0
+﻿fastapi==0.111.0
 uvicorn[standard]==0.29.0
 fastf1==3.3.6
-pandas==2.2.2
-numpy==1.26.4
-scipy==1.13.0
-scikit-learn==1.4.2
+pandas
+numpy
+scipy
+scikit-learn
 supabase==2.4.2
 python-dotenv==1.0.1
 httpx==0.27.0
