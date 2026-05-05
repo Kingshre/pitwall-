@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import os
+from app.services import cache_service
 
 CACHE_DIR = Path(os.getenv("FF1_CACHE_DIR", "/tmp/fastf1_cache"))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -36,6 +37,11 @@ def _norm(value, min_val, max_val, invert=False):
 
 def get_season_drivers(year: int) -> list[dict]:
     """Return all drivers who competed in a season."""
+    cache_key = f"season_drivers:{year}"
+    cached = cache_service.get(cache_key)
+    if cached:
+        return cached
+
     schedule = fastf1.get_event_schedule(year, include_testing=False)
     rounds = schedule[schedule["EventFormat"].isin(["conventional", "sprint_shootout"])]["RoundNumber"].tolist()
     if not rounds:
@@ -50,14 +56,17 @@ def get_season_drivers(year: int) -> list[dict]:
         drv_laps = laps[laps["Driver"] == abbr]
         team = str(drv_laps.iloc[0].get("Team", "")) if len(drv_laps) > 0 else ""
         drivers.append({"driver": str(abbr), "team": team})
+
+    cache_service.set(cache_key, drivers)
     return drivers
 
 
 def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
-    """
-    Compute DNA fingerprint for a driver across a season.
-    Returns 6 normalized scores + raw stats.
-    """
+    cache_key = f"fingerprint:{year}:{driver}"
+    cached = cache_service.get(cache_key)
+    if cached:
+        return cached
+
     schedule = fastf1.get_event_schedule(year, include_testing=False)
     rounds = schedule[schedule["EventFormat"].isin(["conventional", "sprint_shootout"])]["RoundNumber"].tolist()
     rounds = rounds[:max_rounds]
@@ -73,7 +82,6 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
 
     for round_num in rounds:
         try:
-            # ---- RACE ----
             race = fastf1.get_session(year, round_num, "R")
             race.load(laps=True, telemetry=False, weather=True, messages=False)
             laps = race.laps.copy()
@@ -142,7 +150,6 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
             continue
 
         try:
-            # ---- QUALIFYING ----
             quali = fastf1.get_session(year, round_num, "Q")
             quali.load(laps=True, telemetry=False, weather=False, messages=False)
             qlaps = quali.laps.copy()
@@ -184,7 +191,7 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
     else:
         wet_score = 50.0
 
-    return {
+    result = {
         "driver": driver,
         "year": year,
         "rounds_analyzed": len(rounds),
@@ -197,3 +204,6 @@ def get_driver_fingerprint(year: int, driver: str, max_rounds: int = 8) -> dict:
             "wet_weather": round(wet_score, 1),
         },
     }
+
+    cache_service.set(cache_key, result)
+    return result
