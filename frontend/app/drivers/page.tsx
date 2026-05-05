@@ -24,6 +24,7 @@ export default function DriversPage() {
   const [fingerprints, setFingerprints] = useState<DriverData[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     setLoadingDrivers(true);
@@ -34,6 +35,12 @@ export default function DriversPage() {
       .then(d => setDriverList(d.drivers || []))
       .finally(() => setLoadingDrivers(false));
   }, [year]);
+
+  useEffect(() => {
+    if (!loading) { setElapsed(0); return; }
+    const interval = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const toggleDriver = (abbr: string) => {
     setSelected(prev =>
@@ -116,13 +123,46 @@ export default function DriversPage() {
             disabled={!selected.length || loading}
             className="px-6 py-3 bg-pitwall-accent text-white font-mono text-sm uppercase tracking-widest disabled:opacity-40 hover:bg-red-700 transition-colors"
           >
-            {loading ? "Analyzing..." : "Analyze"}
+            {loading ? `Analyzing... ${elapsed}s` : "Analyze"}
           </button>
-          {loading && (
-            <p className="text-pitwall-muted font-mono text-xs mt-2">
-              Fetching {selected.length} driver{selected.length > 1 ? "s" : ""} across {Math.min(8, 22)} rounds — this takes ~60s on first load...
-            </p>
-          )}
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="bg-pitwall-surface border border-pitwall-border p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="font-mono text-xs text-pitwall-accent uppercase tracking-widest animate-pulse">
+              Fetching {selected.join(", ")} · {year}
+            </div>
+            <div className="font-mono text-xs text-pitwall-muted">
+              {elapsed < 60 ? `~${60 - elapsed}s remaining` : "Almost done..."}
+            </div>
+          </div>
+
+          {["QUALIFYING", "RACE PACE", "TYRE MGMT", "CONSISTENCY", "OVERTAKING", "WET WEATHER"].map((label, i) => (
+            <div key={label} className="mb-3">
+              <div className="flex justify-between mb-1">
+                <span className="font-mono text-xs text-pitwall-muted">{label}</span>
+                <span className="font-mono text-xs text-pitwall-muted">—</span>
+              </div>
+              <div className="h-px bg-pitwall-border overflow-hidden">
+                <div
+                  className="h-full bg-pitwall-accent/50"
+                  style={{
+                    width: `${Math.min(100, (elapsed / 60) * 100)}%`,
+                    transition: "width 1s linear",
+                    animationDelay: `${i * 150}ms`,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+
+          <p className="font-mono text-xs text-pitwall-muted mt-6">
+            Loading {selected.length} driver{selected.length > 1 ? "s" : ""} across 8 rounds from FastF1.
+            Subsequent loads will be faster once cached.
+          </p>
         </div>
       )}
 
