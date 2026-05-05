@@ -16,6 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </span>
           <span className="text-xs text-pitwall-muted font-mono uppercase tracking-widest">
             F1 Strategy Intelligence
+            <a href="/drivers" className="text-xs text-pitwall-muted font-mono uppercase tracking-widest hover:text-pitwall-accent transition-colors ml-4">
+  Driver DNA
+</a>
           </span>
         </nav>
         <main>{children}</main>
