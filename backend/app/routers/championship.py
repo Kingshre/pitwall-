@@ -4,6 +4,13 @@ from app.services import ingestion_service
 router = APIRouter(prefix="/championship", tags=["championship"])
 
 
+@router.post("/ingest/all")
+async def ingest_all(background_tasks: BackgroundTasks):
+    """Ingest all seasons 2018-2024 in background."""
+    background_tasks.add_task(ingestion_service.ingest_all_seasons)
+    return {"status": "full ingestion started"}
+
+
 @router.post("/ingest/{year}")
 async def ingest_season(year: int, background_tasks: BackgroundTasks):
     """Trigger data ingestion for a season. Runs in background."""
@@ -11,13 +18,6 @@ async def ingest_season(year: int, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=400, detail="Year must be between 2018 and 2025")
     background_tasks.add_task(ingestion_service.ingest_season, year)
     return {"status": "ingestion started", "year": year}
-
-
-@router.post("/ingest/all")
-async def ingest_all(background_tasks: BackgroundTasks):
-    """Ingest all seasons 2018-2024 in background."""
-    background_tasks.add_task(ingestion_service.ingest_all_seasons)
-    return {"status": "full ingestion started"}
 
 
 @router.get("/results/{year}")
