@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           <div className="ml-auto flex items-center">
             {[
-              { href: "/", label: "Strategy" },
+              { href: "/strategy", label: "Strategy" },
               { href: "/drivers", label: "Driver DNA" },
               { href: "/championship", label: "Championship" },
             ].map((link) => (
