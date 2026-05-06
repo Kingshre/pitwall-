@@ -32,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               { href: "/drivers", label: "Driver DNA" },
               { href: "/championship", label: "Championship" },
               { href: "/live", label: "Live" },
+              { href: "/radio", label: "Radio" },
             ].map((link) => (
               <Link
                 key={link.href}
