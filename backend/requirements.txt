@@ -12,3 +12,5 @@ cachetools
 pydantic
 supabase
 httpx 
+anthropic
+
