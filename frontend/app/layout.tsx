@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Red left accent bar */}
           <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-pitwall-accent" />
           
-          <Link href="/" className="display text-2xl font-900 tracking-widest text-pitwall-accent uppercase py-4 hover:opacity-80 transition-opacity orbitron">
+          <Link href="/strategy" className="display text-2xl font-900 tracking-widest text-pitwall-accent uppercase py-4 hover:opacity-80 transition-opacity orbitron">
             PitWall
           </Link>
 
