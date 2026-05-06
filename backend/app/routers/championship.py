@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from app.services import ingestion_service
+from app.services import ingestion_service, elo_service
 
 router = APIRouter(prefix="/championship", tags=["championship"])
 
@@ -33,3 +33,37 @@ async def get_season_results(year: int):
         .order("round") \
         .execute()
     return {"year": year, "results": res.data}
+
+
+@router.post("/elo/all")
+async def compute_elo_all(background_tasks: BackgroundTasks):
+    """Compute Elo ratings for all seasons 2018-2024."""
+    async def run_all():
+        for year in range(2018, 2025):
+            elo_service.compute_season_elos(year)
+    background_tasks.add_task(run_all)
+    return {"status": "elo computation started for all seasons"}
+
+
+@router.post("/elo/{year}")
+async def compute_elo(year: int, background_tasks: BackgroundTasks, force: bool = False):
+    """Compute Elo ratings for a season."""
+    if year < 2018 or year > 2025:
+        raise HTTPException(status_code=400, detail="Year must be between 2018 and 2025")
+    background_tasks.add_task(elo_service.compute_season_elos, year, force)
+    return {"status": "elo computation started", "year": year}
+
+
+@router.get("/elo/{year}/history")
+async def get_elo_history(year: int):
+    """Get full Elo history across a season."""
+    history = elo_service.get_elo_history(year)
+    return {"year": year, "history": history}
+
+
+@router.get("/elo/{year}")
+async def get_elo_ratings(year: int):
+    """Get current Elo ratings for a season."""
+    ratings = elo_service.get_current_elos(year)
+    sorted_ratings = dict(sorted(ratings.items(), key=lambda x: x[1], reverse=True))
+    return {"year": year, "ratings": sorted_ratings}
