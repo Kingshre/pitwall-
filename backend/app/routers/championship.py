@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from app.services import ingestion_service, championship_service
+from app.services import ingestion_service
 
 router = APIRouter(prefix="/championship", tags=["championship"])
 
