@@ -103,7 +103,8 @@ def compute_season_elos(year: int, force: bool = False) -> dict:
                 race_counts[d] = 0
 
         # Run pairwise Elo updates
-        new_ratings = {d: r for d, r in ratings.items()}
+        new_ratings = {d: v for d, v in ratings.items()}
+
 
         drivers_in_race = [(row["driver"], row["finish_position"], row["dnf"]) for row in race_rows]
 
