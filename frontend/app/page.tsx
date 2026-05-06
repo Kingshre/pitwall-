@@ -80,34 +80,63 @@ export default function LandingPage() {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes revlights {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; box-shadow: 0 0 20px currentColor; }
+        @keyframes f1drive {
+          0% { transform: translateX(-120px) translateY(-50%); }
+          100% { transform: translateX(calc(100vw + 120px)) translateY(-50%); }
+        }
+        @keyframes f1trail {
+          0% { transform: translateX(-320px) translateY(-50%); }
+          100% { transform: translateX(calc(100vw - 100px)) translateY(-50%); }
         }
         .floatin-1 { animation: floatin 0.6s ease-out 0.1s both; }
         .floatin-2 { animation: floatin 0.6s ease-out 0.3s both; }
         .floatin-3 { animation: floatin 0.6s ease-out 0.5s both; }
         .floatin-4 { animation: floatin 0.6s ease-out 0.7s both; }
         .floatin-5 { animation: floatin 0.6s ease-out 0.9s both; }
+        .f1-car {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          animation: f1drive 3.5s linear infinite;
+        }
+        .f1-trail {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          width: 200px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #E8002D);
+          animation: f1trail 3.5s linear infinite;
+        }
       `}</style>
 
-      <div className="flex justify-center gap-3 pt-16 floatin-1">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="w-4 h-4 rounded-full" style={{
-            background: "#E8002D",
-            animation: `revlights 1s ease-in-out ${i * 0.15}s infinite`,
-          }} />
-        ))}
-        <div className="w-8" />
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="w-4 h-4 rounded-full" style={{
-            background: "#E8002D",
-            animation: `revlights 1s ease-in-out ${(i + 6) * 0.15}s infinite`,
-          }} />
-        ))}
+      {/* F1 car animation */}
+      <div className="relative w-full h-16 floatin-1 overflow-hidden">
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-pitwall-border" />
+        <div className="f1-trail" />
+        <div className="f1-car">
+          <svg width="120" height="28" viewBox="0 0 120 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 14 L25 8 L85 8 L100 11 L108 14 L100 17 L85 20 L25 20 Z" fill="#E8002D"/>
+            <path d="M45 8 L52 4 L68 4 L75 8 Z" fill="#0E0E18" stroke="#E8002D" strokeWidth="0.5"/>
+            <path d="M100 12 L115 10 L118 14 L115 18 L100 16 Z" fill="#E8002D"/>
+            <path d="M12 7 L20 7 L20 9 L12 9 Z" fill="#E8002D"/>
+            <path d="M12 19 L20 19 L20 21 L12 21 Z" fill="#E8002D"/>
+            <path d="M14 9 L16 9 L16 19 L14 19 Z" fill="#E8002D"/>
+            <circle cx="95" cy="21" r="4" fill="#222" stroke="#555" strokeWidth="1"/>
+            <circle cx="95" cy="21" r="2" fill="#444"/>
+            <circle cx="28" cy="21" r="5" fill="#222" stroke="#555" strokeWidth="1"/>
+            <circle cx="28" cy="21" r="2.5" fill="#444"/>
+            <circle cx="95" cy="7" r="4" fill="#222" stroke="#555" strokeWidth="1"/>
+            <circle cx="95" cy="7" r="2" fill="#444"/>
+            <circle cx="28" cy="7" r="5" fill="#222" stroke="#555" strokeWidth="1"/>
+            <circle cx="28" cy="7" r="2.5" fill="#444"/>
+            <path d="M52 4 L52 2 L68 2 L68 4" stroke="#E8002D" strokeWidth="1" fill="none"/>
+            <text x="55" y="16" fill="white" fontSize="8" fontFamily="monospace" fontWeight="bold">1</text>
+          </svg>
+        </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 pt-16 pb-8">
+      <div className="max-w-6xl mx-auto px-6 pt-8 pb-8">
         <div className="floatin-2">
           <div className="font-mono text-xs text-pitwall-accent uppercase tracking-widest mb-4 flex items-center gap-2">
             <div className="live-dot" />
