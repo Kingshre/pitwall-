@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from app.services import ingestion_service, elo_service
-
+from app.services import ingestion_service, elo_service, monte_carlo_service
 router = APIRouter(prefix="/championship", tags=["championship"])
 
 
@@ -65,3 +64,10 @@ async def get_elo_ratings(year: int):
     ratings = elo_service.get_current_elos(year)
     sorted_ratings = dict(sorted(ratings.items(), key=lambda x: x[1], reverse=True))
     return {"year": year, "ratings": sorted_ratings}
+
+@router.get("/simulate/{year}")
+async def simulate_championship(year: int, simulations: int = 50000):
+    """Run Monte Carlo championship simulation."""
+    if year < 2018 or year > 2025:
+        raise HTTPException(status_code=400, detail="Year must be between 2018 and 2025")
+    return monte_carlo_service.simulate_championship(year, simulations)
