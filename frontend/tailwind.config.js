@@ -5,18 +5,24 @@ module.exports = {
     extend: {
       colors: {
         pitwall: {
-          bg: "#0A0A0F",
-          surface: "#12121A",
-          border: "#1E1E2E",
+          bg: "#08080E",
+          surface: "#0E0E18",
+          "surface-2": "#13131F",
+          border: "#1A1A2E",
+          "border-bright": "#252540",
           accent: "#E8002D",
           yellow: "#FFF200",
-          muted: "#4A4A6A",
+          teal: "#00D2BE",
+          muted: "#3A3A5C",
+          "muted-2": "#5A5A7A",
           text: "#E8E8F0",
+          "text-dim": "#9090B0",
         },
       },
       fontFamily: {
         mono: ["'JetBrains Mono'", "monospace"],
         display: ["'Barlow Condensed'", "sans-serif"],
+        orbitron: ["'Orbitron'", "monospace"],
       },
     },
   },

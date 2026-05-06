@@ -1,37 +1,207 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@400;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #0A0A0F;
-  --surface: #12121A;
-  --border: #1E1E2E;
+  --bg: #08080E;
+  --surface: #0E0E18;
+  --surface-2: #13131F;
+  --border: #1A1A2E;
+  --border-bright: #252540;
   --accent: #E8002D;
+  --accent-glow: rgba(232, 0, 45, 0.15);
   --yellow: #FFF200;
-  --muted: #4A4A6A;
+  --teal: #00D2BE;
+  --muted: #3A3A5C;
+  --muted-2: #5A5A7A;
   --text: #E8E8F0;
+  --text-dim: #9090B0;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
+  overflow-x: hidden;
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Animated background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(26, 26, 46, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 26, 46, 0.4) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Red accent line at very top */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  z-index: 100;
+  animation: scanline 3s ease-in-out infinite;
+}
+
+@keyframes scanline {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Speed lines on left edge */
+.speed-lines {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    var(--accent) 20%, 
+    transparent 40%,
+    var(--teal) 60%,
+    transparent 80%
+  );
+  animation: speedscroll 2s linear infinite;
+  z-index: 50;
+}
+
+@keyframes speedscroll {
+  0% { background-position: 0 -100%; }
+  100% { background-position: 0 100%; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
 
+/* Typography */
 .display { font-family: 'Barlow Condensed', sans-serif; }
+.orbitron { font-family: 'Orbitron', monospace; }
 
-/* Tire compound dot colors */
-.tire-SOFT     { background: #E8002D; }
-.tire-MEDIUM   { background: #FFF200; }
-.tire-HARD     { background: #EBEBEB; }
-.tire-INTERMEDIATE { background: #39B54A; }
-.tire-WET      { background: #0067FF; }
-.tire-UNKNOWN  { background: #999999; }
+/* Glitch effect for headings */
+.glitch {
+  position: relative;
+}
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}
+.glitch::before {
+  color: var(--teal);
+  animation: glitch1 4s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+}
+.glitch::after {
+  color: var(--accent);
+  animation: glitch2 4s infinite;
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+}
+@keyframes glitch1 {
+  0%, 90%, 100% { transform: translate(0); opacity: 0; }
+  92% { transform: translate(-2px, 1px); opacity: 0.8; }
+  94% { transform: translate(2px, -1px); opacity: 0.8; }
+  96% { transform: translate(0); opacity: 0; }
+}
+@keyframes glitch2 {
+  0%, 90%, 100% { transform: translate(0); opacity: 0; }
+  93% { transform: translate(2px, 1px); opacity: 0.8; }
+  95% { transform: translate(-2px, -1px); opacity: 0.8; }
+  97% { transform: translate(0); opacity: 0; }
+}
+
+/* Animated number ticker */
+@keyframes countup {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ticker { animation: countup 0.4s ease-out forwards; }
+
+/* Card hover effect */
+.f1-card {
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+.f1-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(232,0,45,0.03), transparent);
+  transition: left 0.4s ease;
+}
+.f1-card:hover::before { left: 100%; }
+.f1-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px var(--accent-glow), inset 0 0 20px rgba(232,0,45,0.02);
+}
+
+/* Sector timing colors */
+.sector-purple { color: #9B59B6; }
+.sector-green { color: #2ECC71; }
+.sector-yellow { color: #F1C40F; }
+
+/* Tire compound dots */
+.tire-SOFT     { background: #E8002D; box-shadow: 0 0 6px rgba(232,0,45,0.5); }
+.tire-MEDIUM   { background: #FFF200; box-shadow: 0 0 6px rgba(255,242,0,0.5); }
+.tire-HARD     { background: #EBEBEB; box-shadow: 0 0 6px rgba(235,235,235,0.3); }
+.tire-INTERMEDIATE { background: #39B54A; box-shadow: 0 0 6px rgba(57,181,74,0.5); }
+.tire-WET      { background: #0067FF; box-shadow: 0 0 6px rgba(0,103,255,0.5); }
+.tire-UNKNOWN  { background: #666; }
+
+/* Live pulse dot */
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: livepulse 1s ease-in-out infinite;
+}
+@keyframes livepulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* Page transition */
+main {
+  position: relative;
+  z-index: 1;
+  animation: pagein 0.3s ease-out;
+}
+@keyframes pagein {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Diagonal accent stripe */
+.stripe-accent {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--accent),
+    var(--accent) 2px,
+    transparent 2px,
+    transparent 12px
+  );
+}
