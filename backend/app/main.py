@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.routers import races
 from app.routers import drivers
+from app.routers import championship
 
 
 
@@ -50,6 +51,7 @@ app.add_middleware(
 
 app.include_router(races.router)
 app.include_router(drivers.router)
+app.include_router(championship.router)
 
 
 
