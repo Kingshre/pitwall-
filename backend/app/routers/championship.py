@@ -38,10 +38,8 @@ async def get_season_results(year: int):
 @router.post("/elo/all")
 async def compute_elo_all(background_tasks: BackgroundTasks):
     """Compute Elo ratings for all seasons 2018-2024."""
-    async def run_all():
-        for year in range(2018, 2025):
-            elo_service.compute_season_elos(year)
-    background_tasks.add_task(run_all)
+    for year in range(2018, 2025):
+        background_tasks.add_task(elo_service.compute_season_elos, year, True)
     return {"status": "elo computation started for all seasons"}
 
 
