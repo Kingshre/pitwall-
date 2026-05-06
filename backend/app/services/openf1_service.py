@@ -133,12 +133,14 @@ async def get_race_state(session_key: int) -> dict:
 
 async def _gather(session_key: int):
     import asyncio
-    return await asyncio.gather(
-        get_session_drivers(session_key),
-        get_latest_positions(session_key),
-        get_latest_laps(session_key),
-        get_stints(session_key),
-    )
+    drivers = await get_session_drivers(session_key)
+    await asyncio.sleep(0.3)
+    positions = await get_latest_positions(session_key)
+    await asyncio.sleep(0.3)
+    laps = await get_latest_laps(session_key)
+    await asyncio.sleep(0.3)
+    stints = await get_stints(session_key)
+    return drivers, positions, laps, stints
 
 async def get_sessions(year: int) -> list:
     """Get all race sessions for a year."""
