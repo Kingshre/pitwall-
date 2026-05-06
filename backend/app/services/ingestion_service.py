@@ -1,7 +1,6 @@
 """
 Data Ingestion Service
 Pulls historical race results from FastF1 and stores in Supabase race_results table.
-Run once per season to populate the database.
 """
 
 import math
@@ -30,10 +29,6 @@ def _sf(val, default=None):
 
 
 def ingest_season(year: int) -> dict:
-    """
-    Pull all race results for a season and upsert into race_results table.
-    Returns summary of what was ingested.
-    """
     client = _get_client()
     if not client:
         return {"error": "Supabase not configured"}
@@ -49,43 +44,51 @@ def ingest_season(year: int) -> dict:
     for round_num, race_name in rounds:
         round_num = int(round_num)
 
-        # Check if already ingested
+        # Check if already ingested with real data
         existing = client.table("race_results") \
-            .select("id") \
+            .select("finish_position") \
             .eq("season", year) \
             .eq("round", round_num) \
             .limit(1) \
             .execute()
 
-        if existing.data:
+        if existing.data and existing.data[0]["finish_position"] != 20:
             skipped.append(round_num)
             continue
 
+        # Delete any bad existing data
+        client.table("race_results") \
+            .delete() \
+            .eq("season", year) \
+            .eq("round", round_num) \
+            .execute()
+
         try:
             session = fastf1.get_session(year, round_num, "R")
-            session.load(laps=False, telemetry=False, weather=False, messages=False)
-            results = session.results
-
-            if results is None or len(results) == 0:
+            session.load(laps=True, telemetry=False, weather=False, messages=False)
+            
+            laps = session.laps.copy()
+            if laps is None or len(laps) == 0:
                 skipped.append(round_num)
                 continue
 
-            rows = []
-            for _, row in results.iterrows():
-                driver = str(row.get("Abbreviation", "???"))
-                team = str(row.get("TeamName", "Unknown"))
-                pos = row.get("Position")
-                grid = row.get("GridPosition")
-                status = str(row.get("Status", ""))
-                fl = bool(row.get("FastestLap", False))
+            # Get final position from last lap per driver
+            laps["LapNumber"] = pd.to_numeric(laps["LapNumber"], errors="coerce")
+            last_laps = laps.sort_values("LapNumber").groupby("Driver").last().reset_index()
 
+            rows = []
+            for _, row in last_laps.iterrows():
+                driver = str(row["Driver"])
+                team = str(row.get("Team", "Unknown"))
+                pos = row.get("Position")
                 finish_pos = int(_sf(pos, 20)) if pd.notna(pos) else 20
+
+                # Grid position from first lap
+                first_lap = laps[laps["Driver"] == driver].sort_values("LapNumber").iloc[0]
+                grid = first_lap.get("Position", 20)
                 grid_pos = int(_sf(grid, 20)) if pd.notna(grid) else 20
 
-                dnf = status.lower() not in ("finished", "+1 lap", "+2 laps", "+3 laps", "+4 laps", "+5 laps")
-                pts = POINTS_TABLE[finish_pos - 1] if finish_pos <= 10 else 0
-                if fl and finish_pos <= 10:
-                    pts += 1
+                pts = POINTS_TABLE[finish_pos - 1] if 1 <= finish_pos <= 10 else 0
 
                 rows.append({
                     "season": year,
@@ -96,14 +99,15 @@ def ingest_season(year: int) -> dict:
                     "finish_position": finish_pos,
                     "grid_position": grid_pos,
                     "points": float(pts),
-                    "dnf": dnf,
-                    "dnf_reason": status if dnf else None,
-                    "fastest_lap": fl,
+                    "dnf": False,
+                    "dnf_reason": None,
+                    "fastest_lap": False,
                 })
 
-            client.table("race_results").insert(rows).execute()
-            ingested.append(round_num)
-            print(f"  ✓ {year} R{round_num} {race_name} — {len(rows)} drivers")
+            if rows:
+                client.table("race_results").insert(rows).execute()
+                ingested.append(round_num)
+                print(f"  ✓ {year} R{round_num} {race_name} — {len(rows)} drivers")
 
         except Exception as e:
             print(f"  ✗ {year} R{round_num} — {e}")
@@ -119,7 +123,6 @@ def ingest_season(year: int) -> dict:
 
 
 def ingest_all_seasons(start: int = 2018, end: int = 2024) -> dict:
-    """Ingest all seasons from start to end."""
     results = {}
     for year in range(start, end + 1):
         print(f"\nIngesting {year}...")
