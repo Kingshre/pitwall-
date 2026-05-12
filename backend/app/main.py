@@ -9,6 +9,8 @@ from app.routers import drivers
 from app.routers import championship
 from app.routers import live
 from app.routers.radio import router as radio_router
+from app.routers.predict import router as predict_router
+
 
 
 
@@ -56,6 +58,8 @@ app.include_router(drivers.router)
 app.include_router(championship.router)
 app.include_router(live.router)
 app.include_router(radio_router)
+app.include_router(predict_router)
+
 
 
 
